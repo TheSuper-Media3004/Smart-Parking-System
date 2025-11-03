@@ -1,0 +1,119 @@
+import cv2
+import streamlit as st
+import pickle
+import numpy as np
+import time
+
+# Load parking positions
+width, height = 103, 43
+with open('CarParkPos', 'rb') as f:
+    posList = pickle.load(f)
+
+st.set_page_config(page_title="Parking Slot Detector", layout="wide")
+st.title("🚗 Smart Parking Slot Detection")
+
+page = st.sidebar.radio("📌 Navigation", ["Slot Availability", "Live Detection"])
+
+st.sidebar.header("⚙️ Parameters")
+val1 = st.sidebar.slider("Adaptive Threshold Block Size", 3, 51, 25, step=2)
+val2 = st.sidebar.slider("Adaptive Threshold C", 1, 30, 16)
+val3 = st.sidebar.slider("Median Blur Kernel", 1, 15, 5, step=2)
+
+video_file = st.sidebar.file_uploader("Upload a parking lot video", type=["mp4", "avi"])
+if video_file is None:
+    esp32_ip = st.sidebar.text_input("ESP32-CAM IP (e.g., 192.168.1.101)", "192.168.4.1")
+    stream_url = f"http://{esp32_ip}:81/stream"
+    cap = cv2.VideoCapture(stream_url)
+else:
+    with open("uploaded_video.mp4", "wb") as f:
+        f.write(video_file.read())
+    cap = cv2.VideoCapture("uploaded_video.mp4")
+
+def checkSpaces(imgThres, img):
+    spaces = 0
+    for pos in posList:
+        x, y = pos
+        w, h = width, height
+
+        imgCrop = imgThres[y:y + h, x:x + w]
+        count = cv2.countNonZero(imgCrop)
+
+        if count < 900:
+            color = (0, 200, 0)  # Green → Free
+            thic = 5
+            spaces += 1
+        else:
+            color = (0, 0, 200)  # Red → Occupied
+            thic = 2
+
+        cv2.rectangle(img, (x, y), (x + w, y + h), color, thic)
+        cv2.putText(img, str(count), (x, y + h - 6),
+                    cv2.FONT_HERSHEY_PLAIN, 1, color, 2)
+    return spaces, img
+
+if page == "Slot Availability":
+    st.subheader("📊 Parking Slot Availability")
+    
+    # Placeholder for free slot metric
+    slots_placeholder = st.empty()
+
+    while cap.isOpened():
+        success, img = cap.read()
+        if not success:
+            break
+
+        # Preprocess frame
+        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        imgBlur = cv2.GaussianBlur(imgGray, (3, 3), 1)
+        imgThres = cv2.adaptiveThreshold(
+            imgBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV, val1, val2
+        )
+        imgThres = cv2.medianBlur(imgThres, val3)
+        kernel = np.ones((3, 3), np.uint8)
+        imgThres = cv2.dilate(imgThres, kernel, iterations=1)
+
+        # Count free spaces
+        free_spaces, _ = checkSpaces(imgThres, img)
+
+        # Update free slot metric dynamically
+        slots_placeholder.metric(label="Free Parking Slots", value=f"{free_spaces}/{len(posList)}")
+
+        # Small delay to control update speed
+        time.sleep(0.03)  # ~30 FPS
+
+
+if page == "Live Detection":
+    st.subheader("🎥 Parking Detection")
+    
+    # Placeholders for image and metric
+    image_placeholder = st.empty()
+    slots_placeholder = st.empty()  # <-- For dynamic slot count
+
+    while cap.isOpened():
+        success, img = cap.read()
+        if not success:
+            break
+
+        # Preprocess frame
+        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        imgBlur = cv2.GaussianBlur(imgGray, (3, 3), 1)
+        imgThres = cv2.adaptiveThreshold(
+            imgBlur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV, val1, val2
+        )
+        imgThres = cv2.medianBlur(imgThres, val3)
+        kernel = np.ones((3, 3), np.uint8)
+        imgThres = cv2.dilate(imgThres, kernel, iterations=1)
+
+        # Count free spaces
+        free_spaces, processed_img = checkSpaces(imgThres, img)
+
+        # Show annotated image
+        imgRGB = cv2.cvtColor(processed_img, cv2.COLOR_BGR2RGB)
+        image_placeholder.image(imgRGB, channels="RGB")
+
+        # Show free slots dynamically
+        #slots_placeholder.metric(label="Free Parking Slots", value=f"{free_spaces}/{len(posList)}")
+
+        time.sleep(0.03)  # ~30 FPS
