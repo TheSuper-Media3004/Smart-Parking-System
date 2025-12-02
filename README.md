@@ -2,7 +2,7 @@
 
 An IoT-based intelligent parking management system that uses computer vision and ESP32-CAM to detect parking slot availability in real-time. Features a web-based dashboard for monitoring, live video feed processing, and automated slot status updates.
 
-![Smart Parking Dashboard](images/slot.png)
+![Smart Parking Dashboard](images/slot.jpeg)
 
 ## 🌟 Overview
 
@@ -67,15 +67,13 @@ This project addresses the common problem of finding available parking spaces by
 ## 📸 Screenshots
 
 ### Dashboard Interface
-![Dashboard](images/dashboard-main.png)
+![Dashboard](images/slot.jpeg)
 
 ### Hardware Setup
-![Hardware Setup](images/hardware-prototype.png)
+![Hardware Setup](images/hardware.jpeg)
 
 ### Live Detection
-![Live Detection](images/live-detection.png)
-
-## 🚀 Installation & Setup
+![Live Detection](images/live.jpeg)
 
 ### **Prerequisites**
 ```bash
