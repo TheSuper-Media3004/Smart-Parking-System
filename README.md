@@ -1,6 +1,6 @@
 # 🚗 Smart Parking Slot Detection System
 
-An IoT-based intelligent parking management system that uses computer vision and ESP32-CAM to detect parking slot availability in real-time. Features a web-based dashboard for monitoring, live video feed processing, and automated slot status updates.
+An IoT-based intelligent parking management system that uses computer vision and ESP32-CAM to detect parking slot availability in real-time. Features a web-based dashboard for monitoring, live video feed processing, and automated slot status update.
 
 ![Smart Parking Dashboard](images/slot.jpeg)
 
