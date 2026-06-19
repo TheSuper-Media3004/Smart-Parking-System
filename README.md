@@ -341,7 +341,6 @@ MIN_PIXEL_THRESHOLD = 900  # Minimum pixels for "occupied"
 - Check ESP32-CAM IP address
 - Verify network connectivity
 - Restart Flask/Streamlit server
-- Check firewall settings
 
 ## 📚 Learning Resources
 
